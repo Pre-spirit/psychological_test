@@ -1,77 +1,3 @@
-<!--
-<template>
-  <div>
-    <label>
-      <input type="radio" value="option1" v-model="selectedOption"> 是
-    </label>
-    <label>
-      <input type="radio" value="option2" v-model="selectedOption"> 否
-    </label>
-    <p>Selected option: {{ selectedOption }}</p>
-  </div>
-</template>
-
-<script>
-import { ref } from 'vue'
-
-export default {
-  setup() {
-    const selectedOption = ref('option1')
-
-    return {
-      selectedOption
-    }
-  }
-}
-</script>
--->
-
-<!--
-<template>
-  <div>
-    <ul>
-      <li v-for="user in userList" :key="user.id">{{ user.id}}: {{ user.description}} - {{ user.type}}</li>
-    <label>
-      <input type="radio" value="option1" v-model="selectedOption"> 是
-    </label>
-    <label>
-      <input type="radio" value="option2" v-model="selectedOption"> 否
-    </label>
-    <p>Selected option: {{ selectedOption }}</p>
-    </ul>
-  </div>
-</template>
-
-<script>
-import Fetch from '../config/fetch'
-
-export default {
-  data() {
-    return {
-      userList: []
-    }
-  },
-  created() {
-    Fetch({
-      method: 'get',
-      url: 'http://127.0.0.1:8080/personality',
-      data:{
-        'type':1
-      }
-    }).then(res => {
-
-      this.userList = res.data
-    })
-  }
-
-  
-}
-
-
-</script>
--->
-
-<!-- 页面 -->
 <template>
   <div>
     <h2>九型人格测试</h2>
@@ -80,8 +6,7 @@ export default {
         {{ item.id }} {{ item.describe }}
         <div>
           <label>
-            <!-- <input type="radio" :value="item.type" v-model="item.flag" @change="updateCount(item)"> 是 -->
-            <input type="radio" :value=1 v-model="item.flag" @change="updateCount(item)"> 是
+            <input type="radio" :value="item.type" v-model="item.flag" @change="updateCount(item)"> 是
           </label>
           <label>
             <input type="radio" value="0" v-model="item.flag" @change="updateCount(item)"> 否
@@ -91,14 +16,46 @@ export default {
     </ul>
     <button @click="goToUrl('/result')">跳转至结果页</button>
   </div>
+  <div class="popup" v-if="show">
+      <div class="popup-content">
+        <h3>提示</h3>
+        <p>请完成全部测试题后提交！</p>
+        <button @click="closePopup">关闭</button>
+      </div>
+    </div>
 </template>
 
+<style>
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+button {
+  margin-top: 10px;
+}
+</style>
+
 <script>
-import { ref, reactive } from 'vue';
+import { reactive, ref } from 'vue';
 
 export default {
   data() {
     return {
+      show: false,
       message: "",
       items: []
     };
@@ -116,142 +73,56 @@ export default {
   },
   methods: {
     goToUrl(url) {
-      window.location.href = url;
+      console.log("idFlag: ", Object.keys(this.idFlag)['length'])
+      if (Object.keys(this.idFlag)['length'] == 108) {
+        localStorage.setItem('data', JSON.stringify(this.personalityCount));
+        window.location.href = url;
+      } else {
+        this.show = true
+      }
+      // localStorage.setItem('data', JSON.stringify(this.personalityCount));
+      // window.location.href = url;
+    },
+    closePopup() {
+      this.show = false;
     },
     updateCount(item) {
-      const idCount = this.idCount;
       const personalityCount = this.personalityCount;
-      const idList = this.idList;
-      
-      console.log('testItem', item)
-      if (idList.indexOf(item.id) != -1) {
-        console.log('testList', idList)
-        switch (item.type) {
-          case 1:
-            personalityCount.PerfectType -= 1;
-            break;
-          case 2:
-            personalityCount.GivenType -= 1;
-            break;
-          case 3:
-            personalityCount.AchievementType -= 1;
-            break;
-          case 4:
-            personalityCount.RomanticType -= 1;
-            break;
-          case 5:
-            personalityCount.ObserveType -= 1;
-            break;
-          case 6:
-            personalityCount.DoubtType -= 1;
-            break;
-          case 7:
-            personalityCount.PleasureType -= 1;
-            break;
-          case 8:
-            personalityCount.LeadershipType -= 1;
-            break;
-          case 9:
-            personalityCount.MediatingType -= 1;
-            break;
-        } 
-      } else {
-        idList[idCount] = item.id;
-        idCount += 1;
-        console.log('testList', idList);
-        console.log('testIdCount', idCount);
+      const idFlag = this.idFlag;
+
+      const currentType = item.type.toString(); // 将类型转换为字符串作为键
+      const idNum = item.id.toString();
+
+      // 如果类型不存在于 personalityCount 中，则初始化计数为 0
+      if (!personalityCount[currentType]) {
+        personalityCount[currentType] = 0;
       }
 
-      // 获取当前选中的类型并增加计数
-      if (item.flag == 1) {
-        switch (item.type) {
-          case 1:
-            personalityCount.PerfectType += 1;
-            break;
-          case 2:
-            personalityCount.GivenType += 1;
-            break;
-          case 3:
-            personalityCount.AchievementType += 1;
-            break;
-          case 4:
-            personalityCount.RomanticType += 1;
-            break;
-          case 5:
-            personalityCount.ObserveType += 1;
-            break;
-          case 6:
-            personalityCount.DoubtType += 1;
-            break;
-          case 7:
-            personalityCount.PleasureType += 1;
-            break;
-          case 8:
-            personalityCount.LeadershipType += 1;
-            break;
-          case 9:
-            personalityCount.MediatingType += 1;
-            break;
+      if (idFlag[idNum]) {
+        if (idFlag[idNum] != "0") {
+          personalityCount[currentType] -= 1;
         }
       }
-      console.log('personalityCount:', this.personalityCount);
+
+      idFlag[idNum] = item.flag;
+
+      // 获取当前选中的类型并增加计数
+      if (item.flag != "0") {
+        personalityCount[currentType] += 1;
+      }
+
+      // console.log('idFlag:', idFlag);
+      // console.log('personalityCount:', personalityCount);
     }
   },
   setup() {
-    let personalityCount = reactive({
-      PerfectType: 0,
-      GivenType: 0,
-      AchievementType: 0,
-      RomanticType: 0,
-      ObserveType: 0,
-      DoubtType: 0,
-      PleasureType: 0,
-      LeadershipType: 0,
-      MediatingType: 0,
-    });
-    
-    let idCount = ref(0);
-    let idList = ref([]);
+    const personalityCount = reactive({});
+    const idFlag = reactive({});
 
     return {
-      idList,
-      idCount,
       personalityCount,
+      idFlag,
     };
   },
 };
 </script>
-
-
-
-
-<!-- <template>
-  <div>
-    <div v-for="item in list" :key="item.id">
-      <input type="radio" :id="item.id" :value="item.value" v-model="selectedItem" />
-      <label :for="item.id">{{ item.label }}</label>
-    </div>
-
-    <p>选中的选项是: {{ selectedItem }}</p>
-  </div>
-</template>
-
-<script>
-import { ref } from 'vue';
-
-export default {
-  setup() {
-    const list = [
-      { id: 1, label: '是', value: 1 },
-      { id: 2, label: '否', value: 0 },
-    ];
-
-    const selectedItem = ref('');
-
-    return {
-      list,
-      selectedItem,
-    };
-  },
-};
-</script> -->
